@@ -1,0 +1,11 @@
+##############################################################################
+## subMakefile for mouse
+##############################################################################
+
+mouse/mouse_sdl.$(O): mouse/mouse_sdl.c mouse/mouse.h mem/subMakefile
+mouse/mouse_sdl.$(O): config.h event/event.h event/event_tbl.h periph/periph.h
+mouse/mouse_sdl.$(O): sdl_jzintv.h
+
+OBJS_SDL += mouse/mouse_sdl.$(O)
+
+# nothing for SDL2 at the moment

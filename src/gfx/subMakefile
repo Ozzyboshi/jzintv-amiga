@@ -1,0 +1,33 @@
+##############################################################################
+## subMakefile for gfx
+##############################################################################
+
+
+
+gfx/gfx_null.$(O): gfx/gfx_null.c gfx/gfx.h 
+gfx/gfx_null.$(O): gfx/subMakefile avi/avi.h
+gfx/gfx_null.$(O): config.h periph/periph.h file/file.h lzoe/lzoe.h
+
+gfx/gfx_sdl.$(O): gfx/gfx_sdl.c gfx/gfx.h 
+gfx/gfx_sdl.$(O): gfx/subMakefile avi/avi.h
+gfx/gfx_sdl.$(O): config.h periph/periph.h file/file.h lzoe/lzoe.h
+gfx/gfx_sdl.$(O): gfx/gfx_scale.h gfx/gfx_prescale.h sdl_jzintv.h
+
+gfx/gfx_scale.$(O): gfx/gfx_scale.c gfx/gfx.h gfx/gfx_scale.h gfx/subMakefile
+gfx/gfx_scale.$(O): config.h periph/periph.h
+
+gfx/gfx_prescale.$(O): gfx/gfx_prescale.c gfx/gfx.h gfx/gfx_prescale.h
+gfx/gfx_prescale.$(O): scale/scale2x.h scale/scale3x.h
+gfx/gfx_prescale.$(O): config.h periph/periph.h gfx/subMakefile
+
+
+OBJS_NULL += gfx/gfx_null.$(O)
+
+OBJS_SDL  += gfx/gfx_sdl.$(O)
+OBJS_SDL  += gfx/gfx_scale.$(O)
+OBJS_SDL  += gfx/gfx_prescale.$(O)
+
+OBJS_SDL2 += gfx/gfx_null.$(O)
+#OBJS_SDL2 += gfx/gfx_sdl2.$(O)
+#OBJS_SDL2 += gfx/gfx_scale.$(O)
+#OBJS_SDL2 += gfx/gfx_prescale.$(O)

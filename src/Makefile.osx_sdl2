@@ -1,0 +1,165 @@
+##############################################################################
+## Source-level Makefile for jzintv
+##############################################################################
+
+##############################################################################
+## Project directory structure
+##############################################################################
+B=../bin
+L=../lib
+R=../rom
+
+##############################################################################
+## Project-wide build flags
+##############################################################################
+P           = export PATH;
+
+# Changed to use SDL2 frameworks .-- Fri. Aug. 6 JJT
+# Now SDL2 -- 28-OCT-2017 JZ
+
+# The instructions for installing the SDL2 framework suggest that it be placed
+# in your ~/Library/Frameworks directory. Override this variable if this is
+# not the case.
+SDL2_FRAMEWORK := /Library/Frameworks/SDL2.framework
+
+
+# Flags for using the so-called "portable syntax" for including SDL2 headers
+# (such as #include "SDL.h")
+SDL2_PORT_SYN_FLAGS := -I$(SDL2_FRAMEWORK)/Headers/
+
+# Note: -F$(SDL2_FRAMEWORK)/.. ensures that gcc can find the SDL2 framework even
+# if SDL2_FRAMEWORK had to be overrriden.  See above.
+SDL2_CFLAGS := -DUSE_SDL2 $(SDL2_PORT_SYN_FLAGS)
+SDL2_LFLAGS := -F$(SDL2_FRAMEWORK)/.. -framework SDL2 \
+               -framework AppKit -framework Foundation -lobjc
+
+# Set "X" to be the executable extension, and "O" to be the object extension.
+X =
+O = o
+
+# Set "RM" to be the remove/delete command
+RM = rm -f
+
+# WARN_M used for building the .m file
+ WARN_M  = -Wall -W -Wextra -Wshadow -Wpointer-arith
+ WARN_M += -Wbad-function-cast -Wcast-qual -Wc++-compat
+ WARN_M += -Wmissing-declarations -Wmissing-prototypes
+ WARN_M += -Wstrict-prototypes
+ WARN_M += -Werror
+
+ WARN    = -Wall -W -Wextra -Wshadow -Wpointer-arith
+ WARN   += -Wbad-function-cast -Wcast-qual -Wc++-compat
+ WARN   += -Wmissing-declarations -Wmissing-prototypes
+ WARN   += -Wstrict-prototypes -Wmaybe-uninitialized
+ WARN   += -Werror
+
+ WARNXX  = -Wall -W -Wextra -Wshadow -Wpointer-arith
+ WARNXX += -Wcast-qual -Wsequence-point
+ WARNXX += -Wc++11-compat -Wc++14-compat -Wc++1z-compat
+ WARNXX += -Werror
+
+ LTO = -flto
+ CC  = $(P) /usr/local/gcc-7.1/bin/gcc $(LTO)
+ CXX = $(P) /usr/local/gcc-7.1/bin/g++ $(LTO) -std=c++14 -fvisibility=hidden
+#CC  = $(P) gcc-4.9.1 $(LTO)
+#CXX = $(P) g++-4.9.1 $(LTO) -std=c++14 -fvisibility=hidden
+#CC  = $(P) gcc
+#CXX = $(P) g++
+
+LIBCXX = -static-libstdc++ -static-libgcc
+
+DEF_FLAGS =  -DPLAT_MACOS
+
+#OPT_FLAGS = -ggdb
+#OPT_FLAGS = -O
+#OPT_FLAGS = -O2 -ggdb
+ OPT_FLAGS = -O6 -fomit-frame-pointer -msse3
+#OPT_FLAGS = -O6 -msse3 -pg
+#OPT_FLAGS =  -pg -ggdb -DLOCAL=
+
+#ARCH     = -arch ppc -arch i386 -m32
+ARCH     = -arch i386
+CFLAGS    = $(ARCH) -mmacosx-version-min=10.6 -L../lib
+CFLAGS   += $(OPT_FLAGS) -I. -I.. $(DEF_FLAGS) $(EXTRA)
+CXXFLAGS  = $(ARCH) -mmacosx-version-min=10.6 -L../lib
+CXXFLAGS += $(OPT_FLAGS) -I. -I.. $(DEF_FLAGS) $(EXTRA)
+#LFLAGS   = -isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4 -L../lib
+#LFLAGS   = -isysroot /Developer/SDKs/MacOSX10.7.sdk -L../lib
+LFLAGS    = -L../lib
+
+SDL2MAIN_CC = $(P) gcc $(ARCH)
+
+# Note: SDL2_Main.$(O) is *not* included, as it needs to be handled specially.
+# -- Tues Aug. 31 JJT
+OBJS      = jzintv.$(O)
+PROG_SDL2  = $(B)/jzintv$(X)
+PROG_NULL = $(B)/jzintv_batch$(X)
+TOCLEAN  += $(PROG_SDL2) $(PROG_NULL) core
+TOCLEAN  += libjzintv_common.a libjzintv_sdl2.a libjzintv_null.a
+TOCLEAN  += jzintv_fromcommon$(X)
+OBJS_SDL2 += pads/pads_cgc_linux.$(O)
+
+CFLAGS   += $(SDL2_CFLAGS)
+CXXFLAGS += $(SDL2_CFLAGS)
+
+# Add C++ static libraries to all link targets
+LFLAGS += $(LIBCXX)
+
+# Override static linkage, which isn't supported on Mac.
+SLFLAGS = $(LFLAGS)
+
+# Sanitizer
+#SANI  = -fsanitize=address
+#SANI += -fsanitize=leak
+#SANI += -fsanitize=undefined
+
+CFLAGS_NOSANI := $(CFLAGS) $(WARN_M)
+CFLAGS        += $(SANI) $(WARN)
+CXXFLAGS      += $(SANI) $(WARNXX)
+
+##############################################################################
+## Generic build-rules
+##############################################################################
+
+all: $(OBJS) $(OBJS_SDL2) $(OBJS_NULL) libjzintv_common.a libjzintv_sdl2.a libjzintv_null.a $(PROG_SDL2) $(PROG_NULL)
+
+##############################################################################
+## Makefile.common includes all the subMakefiles and such
+##############################################################################
+ include Makefile.common
+
+$(PROG_SDL2): $(OBJS) $(OBJS_SDL2)
+	$(CXX) -o $(PROG_SDL2) $(OBJS) $(OBJS_SDL2) $(CFLAGS) $(LFLAGS) $(SDL2_LFLAGS) $(CHEAT_LFLAGS)
+
+$(PROG_NULL): $(OBJS) $(OBJS_NULL)
+	$(CXX) -o $(PROG_NULL) $(OBJS) $(OBJS_NULL) $(CFLAGS) $(LFLAGS) $(CHEAT_LFLAGS)
+
+#Library for use with the OS X GUI project.
+libjzintv_common.a : $(OBJS)
+	libtool -o libjzintv_common.a $(OBJS)
+
+libjzintv_sdl2.a : $(OBJS_SDL2)
+	libtool -o libjzintv_sdl2.a $(OBJS_SDL2)
+
+libjzintv_null.a : $(OBJS_NULL)
+	libtool -o libjzintv_null.a $(OBJS_NULL)
+
+#Test program for libjzintv_common.a . If everything is OK, this program should
+#behave exactly like jzintv.
+jzintv_fromcommon : libjzintv_common.a libjzintv_sdl2.a
+	$(CC) -o jzintv_fromcommon $(CFLAGS) $(LFLAGS) $(SDL2_LFLAGS) -L. -ljzintv_common -ljzintv_sdl
+
+clean:
+	$(RM) $(OBJS)
+	$(RM) $(OBJS_SDL2)
+	$(RM) $(OBJS_NULL)
+	$(RM) $(TOCLEAN)
+
+%.$(O): %.c
+	$(CC) -o $@  $(CFLAGS) -c $<
+
+%.$(O): %.cpp
+	$(CXX) -o $@  $(CXXFLAGS) -c $<
+
+build: jzIntv SDK-1600
+

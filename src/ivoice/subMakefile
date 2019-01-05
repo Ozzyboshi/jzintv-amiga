@@ -1,0 +1,8 @@
+##############################################################################
+## subMakefile for ivoice
+##############################################################################
+
+ivoice/ivoice.$(O): ivoice/ivoice.c ivoice/ivoice.h ivoice/subMakefile
+ivoice/ivoice.$(O): gfx/gfx.h stic/stic.h speed/speed.h demo/demo.h lzoe/lzoe.h
+
+OBJS += ivoice/ivoice.$(O)

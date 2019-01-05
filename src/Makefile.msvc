@@ -1,0 +1,101 @@
+##############################################################################
+## Source-level Makefile for jzintv, targeting Windows
+## with the MSVC compiler.
+## Assumes a cygwin shell environment, for "make" and "rm -f".
+##############################################################################
+
+##############################################################################
+## Project directory structure
+##############################################################################
+B=../bin
+L=../lib
+R=../rom
+X=.exe
+RM=rm -f
+O=obj
+FO=-Fo
+FE=-Fe
+
+# No need for -static when linking.
+STATIC_FLAG =
+
+##############################################################################
+## Project-wide build flags
+##############################################################################
+
+# Uses SDL1.  (Tested with SDL-1.2.15)
+# Assumes you have copied files from the SDL archive:
+#    SDL's include files into ./SDL (e.g., #include "SDL/SDL.h" works)
+#    SDL's lib/{x86,x64}/SDL.lib into ../lib (e.g., ../lib/SDL.lib exists)
+#    SDL's lib/{x86,x64}/SDL.dll into ../bin (e.g., ../bin/SDL.dll exists)
+#    Use the x86 flavor to build 32-bit binaries, x64 for 64-bit.
+
+SDL_CFLAGS=
+SDL_LFLAGS= $(L)/SDL.lib
+
+WARN = -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS
+WARNXX = $(WARN)
+
+CC  = cl -nologo
+CXX = cl -nologo
+
+DEF_FLAGS  = -DWIN32
+
+OPT_FLAGS = -O2
+
+CFLAGS   = $(OPT_FLAGS) $(WARN)   -I. -I.. $(DEF_FLAGS) $(EXTRA) $(SDL_CFLAGS)
+CXXFLAGS = $(OPT_FLAGS) $(WARNXX) -I. -I.. $(DEF_FLAGS) -EHsc $(EXTRA) \
+           $(SDL_CFLAGS)
+LFLAGS   = notelemetry.$(O)
+
+OBJS      = jzintv.$(O)
+OBJS_SDL  = SDL_main.$(O)
+SDL_DLL   = $(B)/SDL.dll
+PROG_SDL  = $(B)/jzintv$(X)
+PROG_NULL = $(B)/jzintv_null$(X)
+TOCLEAN  += $(PROG_SDL)
+TOCLEAN  += $(PROG_NULL)
+
+##############################################################################
+## Generic build-rules
+##############################################################################
+
+all: $(OBJS) $(PROG_SDL) $(PROG_NULL)
+
+#mk_tbl_hack:
+#	make -f Makefile.msvc $(B)/mk_tbl
+#	copy $(B)/mk_tbl $(B)/mk_tbl.exe
+
+$(PROG_SDL): $(OBJS) $(OBJS_SDL) svn_revision.$(O)
+	$(CXX) $(FE)$(PROG_SDL) $(OBJS) $(OBJS_SDL) $(CXXFLAGS) $(LFLAGS) \
+	$(SDL_LFLAGS) svn_revision.$(O) -link -SUBSYSTEM:CONSOLE
+
+$(PROG_NULL): $(OBJS) $(OBJS_NULL) svn_revision.$(O)
+	$(CXX) $(FE)$(PROG_NULL) $(OBJS) $(OBJS_NULL) $(CXXFLAGS) $(LFLAGS) \
+	svn_revision.$(O)
+
+clean:
+	$(RM) $(OBJS)
+	$(RM) *.$(O)
+	$(RM) $(OBJS_SDL)
+	$(RM) $(OBJS_NULL)
+	$(RM) svn_revision.$(O)
+	$(RM) $(TOCLEAN)
+
+%.$(O): %.c
+	$(CC) $(FO)$@ $(CFLAGS) -c $<
+
+%.$(O): %.cpp
+	$(CXX) $(FO)$@ $(CXXFLAGS) -c $<
+
+##############################################################################
+## Win32 specific stuff
+##############################################################################
+
+OBJS += pads/pads_cgc_win32.$(O) pads/pads_intv2pc.$(O)
+
+##############################################################################
+## Makefile.common includes all the subMakefiles and such
+##############################################################################
+include Makefile.common
+build: jzIntv SDK-1600
